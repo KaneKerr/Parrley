@@ -3,6 +3,7 @@ import dotenv
 from dotenv import load_dotenv
 from json import dumps
 import time
+import os
 import requests
 
 load_dotenv()
