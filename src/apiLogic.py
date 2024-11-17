@@ -21,6 +21,7 @@ def calc_trades():
             print(f"GBP Balance: {gbp_balance}")
 
             lot = float(gbp_balance) / 100
+            lot = round(lot)
             lot = str(lot)
             make_order(lot)
             break
