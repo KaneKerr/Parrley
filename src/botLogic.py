@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 import requests
 import time
 from apiLogic import calc_trades
+import pandas as pd
 
 
 def fetch_candles(start_timestamp, end_timestamp):
@@ -22,23 +24,40 @@ def fetch_candles(start_timestamp, end_timestamp):
         return []
 
 
-# Function to calculate if the market is oversold
 def over_sold():
     try:
         rsi_values = fetch_and_calculate_rsi(period=14)
+        ema_values = fetch_and_calculate_ema(period=200)
+
         latest_rsi = rsi_values[-1]
+        latest_ema = ema_values[-1]
+
+        # Latest closing price (from the most recent candle)
+        current_price = float(fetch_candles(int(time.time()) - 3600, int(time.time()))[-1][4])
 
         print(f"Latest RSI: {latest_rsi}")
+        print(f"Latest EMA: {latest_ema}")
+        print(f"Current price: {current_price}")
 
-        if latest_rsi < 30:
-            print("Market is oversold. Making buy order...")
+        # Check if the current price is above or below the EMAs
+        if current_price > latest_ema and latest_rsi < 30:
+            print("Market is bullish and OverSold. The current price is above the EMA and the RSI is below 30.")
             calc_trades()
-        elif latest_rsi > 70:
-            print("Market is overbought. Consider selling.")
+        elif current_price < latest_ema and latest_rsi < 30:
+            print(
+                "Market is bearish. The current price is below the EMA but the market is OverSold. The RSI is below 30.")
+        elif latest_rsi > 30 and latest_ema > current_price:
+            print("Market is overbought and EMA is above the current price, the RSI is above 30.")
+        elif current_price > latest_ema and latest_rsi > 70:
+            print("Market is bullish but overbought. The current price is above the EMA and the RSI is above 70.")
+        elif current_price < latest_ema and latest_rsi > 70:
+            print("Market is bearish and overbought. The current price is below the EMA and the RSI is above 70.")
+        elif current_price > latest_ema and 30 <= latest_rsi <= 70:
+            print("Market is bullish but neutral. The current price is above the EMA and the RSI is between 30 and 70.")
         else:
-            print("Market is neutral. Waiting for next check.")
+            print("Market is neutral. The current price is equal to the EMA or the RSI is between 30 and 70.")
     except Exception as e:
-        print(f"Error in RSI calculation: {e}")
+        print(f"Error in RSI or EMA calculation: {e}")
 
 
 # Function to calculate the RSI
@@ -96,3 +115,41 @@ def fetch_and_calculate_rsi(period=14):
 
     # Calculate RSI based on the closing prices
     return calculate_rsi(prices, period=period)
+
+
+def calculate_ema(prices, period=200):
+    if len(prices) < period:
+        raise ValueError("Not enough data to calculate EMA")
+
+    # Calculate the smoothing factor
+    alpha = 2 / (period + 1)
+
+    # Initialize EMA with the first price
+    ema_values = [prices[0]]
+
+    # Calculate the EMA for each subsequent price
+    for price in prices[1:]:
+        new_ema = (price * alpha) + (ema_values[-1] * (1 - alpha))
+        ema_values.append(new_ema)
+
+    return ema_values
+
+
+# Fetch and calculate EMA
+def fetch_and_calculate_ema(period=200):
+    current_timestamp = int(time.time())
+    start_timestamp = current_timestamp - (9 * 24 * 60 * 60)
+
+    candles = fetch_candles(
+        start_timestamp=start_timestamp,
+        end_timestamp=current_timestamp,
+    )
+
+    if not candles:
+        raise RuntimeError("Failed to fetch candle data")
+
+    # Extract closing prices from the fetched candles
+    prices = [float(candle[4]) for candle in candles]
+
+    # Calculate EMA based on the closing prices
+    return calculate_ema(prices, period=period)
