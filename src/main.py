@@ -4,10 +4,9 @@ import time
 
 
 def main():
-    while True:  # Loop to keep the process running continuously
-        get_btc_gbp_price()
+    while True:
         over_sold()
-        time.sleep(120)
+        time.sleep(3600)
 
 
 if __name__ == "__main__":
