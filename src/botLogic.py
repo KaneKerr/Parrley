@@ -100,7 +100,7 @@ def calculate_rsi(prices, period=14):
 
 def fetch_and_calculate_rsi(period=14):
     current_timestamp = int(time.time())
-    start_timestamp = current_timestamp - (7 * 24 * 60 * 60)  # 7 days instead of 14 days
+    start_timestamp = current_timestamp - (10 * 24 * 60 * 60)  # 7 days instead of 14 days
 
     candles = fetch_candles(
         start_timestamp=start_timestamp,
