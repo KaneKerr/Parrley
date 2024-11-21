@@ -1,4 +1,4 @@
-from apiLogic import *
+from newsFilter import newsFilter
 from botLogic import over_sold
 import time
 
@@ -6,6 +6,7 @@ import time
 def main():
     while True:
         over_sold()
+        newsFilter()
         time.sleep(3600)
 
 
