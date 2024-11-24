@@ -2,40 +2,40 @@ import datetime
 import dotenv
 from dotenv import load_dotenv
 import requests
+from botLogic import over_sold
 
-now = datetime.datetime.now().strftime("%Y-%m-%d")
+today = datetime.datetime.now().date()
 load_dotenv()
 api_key = dotenv.get_key("../.env", "news_api")
 
 
-def newsFilter():
-    urlbit = (
-        f"https://newsapi.org/v2/top-headlines?q=bitcoin&category=business&from={now}&apiKey={api_key}"
-    )
+def get_news():
+    url = "https://crypto-news16.p.rapidapi.com/news/coincu"
 
-    urlbit2 = (
-        f"https://newsapi.org/v2/top-headlines?q=BTC&category=business&from={now}&apiKey={api_key}"
-    )
+    headers = {
+        "x-rapidapi-key": api_key,
+        "x-rapidapi-host": "crypto-news16.p.rapidapi.com"
+    }
 
-    urlfomc1 = (
-        f"https://newsapi.org/v2/top-headlines?q=fomc&from={now}&apiKey={api_key}"
-    )
+    response = requests.get(url, headers=headers)
 
-    urlfomc2 = (
-        f"https://newsapi.org/v2/top-headlines?q=federal reserve&from={now}&apiKey={api_key}"
-    )
+    data = response.json()
 
-    urltrump = (
-        f"https://newsapi.org/v2/top-headlines?q=trump&category=business&from={now}&sortBy=relevance&apiKey={api_key}"
-    )
+    filtered_data = []
 
-    #
-    # response = requests.get(urlbit)
-    # response2 = requests.get(urlfomc1)
-    #
-    # response3 = requests.get(urlbit2)
-    # response4 = requests.get(urlfomc2)
-    #
-    # response5 = requests.get(urltrump)
-    #
-    # print(f"{response.json()}, \n {response2.json()} \n {response3.json()}, \n {response4.json()}, \n {response5.json()}")
+    filters = ["bitcoin", "btc", "coinbase", "fomc", "warren buffett", "crypto", "eth", "ethereum", "ether"]
+
+    for article in data:
+        try:
+            article_date = datetime.datetime.strptime(article['date'], "%a, %d %b %Y %H:%M:%S %z").date()
+            for filter1 in filters:
+                if filter1 in article['title'].lower() and article_date >= today:
+                    filtered_data.append(article)
+        except ValueError:
+            continue
+
+    if len(filtered_data) < 5:
+        print("Not enough news running bot")
+        over_sold()
+    else:
+        print("Too much news")

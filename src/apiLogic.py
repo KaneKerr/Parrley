@@ -33,7 +33,7 @@ def calc_trades():
 
 def monitor_price(order_id, lot, take, stop):
     print(f"Current order state: {order_state}")
-    print("Monitor thread started.")  # Debug: Confirm thread start
+    print("Monitor thread started.")
 
     try:
         while order_id in order_state:
@@ -44,7 +44,7 @@ def monitor_price(order_id, lot, take, stop):
 
             if current_price >= take:
                 print(f"Take profit reached at {current_price:.3f}")
-                take_profit(f"trade taken {current_price}", lot)
+                take_profit(lot)
                 order_state.pop(order_id)
                 break
             elif current_price <= stop:
@@ -98,9 +98,7 @@ def make_order(lot):
         print("Error: Response not found in order.")
 
 
-def take_profit(current_price, lot):
-    take_profit_price = current_price * 1.05
-    print(f"Take profit price: {take_profit_price}")
+def take_profit(lot):
 
     tp = lot * 1.05
 

@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
+
 import requests
 import time
 from apiLogic import calc_trades
-import pandas as pd
 
 
 def fetch_candles(start_timestamp, end_timestamp):
@@ -100,7 +99,7 @@ def calculate_rsi(prices, period=14):
 
 def fetch_and_calculate_rsi(period=14):
     current_timestamp = int(time.time())
-    start_timestamp = current_timestamp - (10 * 24 * 60 * 60)  # 7 days instead of 14 days
+    start_timestamp = current_timestamp - (10 * 24 * 60 * 60)
 
     candles = fetch_candles(
         start_timestamp=start_timestamp,

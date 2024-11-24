@@ -1,12 +1,10 @@
-from newsFilter import newsFilter
-from botLogic import over_sold
+from newsFilter import get_news
 import time
 
 
 def main():
     while True:
-        over_sold()
-        newsFilter()
+        get_news()
         time.sleep(3600)
 
 
