@@ -59,47 +59,51 @@ def monitor_price(order_id, lot, take, stop):
 
 
 def make_order(lot):
-    order = client.market_order_buy(
-        client_order_id="",
-        product_id="BTC-GBP",
-        quote_size=lot,
-    )
 
-    print(f"Order response: {order}")
-
-    if hasattr(order, 'success') and order.success:
-        order_id = order.response['order_id']
-        print(f"Order placed successfully! Order ID: {order_id}")
-
-        price_at_buy = client.get_product("BTC-GBP")
-        btc_gbp_price = float(price_at_buy["price"])
-
-        take = btc_gbp_price * 1.05
-        stop = btc_gbp_price * 0.95
-        print(f"Take profit price: {take:.3f}")
-        print(f"Stop loss price: {stop:.3f}")
-
-        if order_id not in order_state:
-            order_state[order_id] = {
-                "lot": lot,
-                "take": take,
-                "stop": stop
-            }
-            print(f"Current order state: {order_state}")
-
-            # Start monitoring in a new thread
-            monitoring_thread = threading.Thread(target=monitor_price, args=(order_id, lot, take, stop))
-            monitoring_thread.daemon = True
-            monitoring_thread.start()
-            print("Monitoring thread started.")
-        else:
-            print(f"Order with ID {order_id} is already in the order state.")
+    if len(order_state) >= 5:
+        print("Maximum number of orders reached. Exiting.")
+        return
     else:
-        print("Error: Response not found in order.")
+        order = client.market_order_buy(
+            client_order_id="",
+            product_id="BTC-GBP",
+            quote_size=lot,
+        )
+
+        print(f"Order response: {order}")
+
+        if hasattr(order, 'success') and order.success:
+            order_id = order.response['order_id']
+            print(f"Order placed successfully! Order ID: {order_id}")
+
+            price_at_buy = client.get_product("BTC-GBP")
+            btc_gbp_price = float(price_at_buy["price"])
+
+            take = btc_gbp_price * 1.05
+            stop = btc_gbp_price * 0.95
+            print(f"Take profit price: {take:.3f}")
+            print(f"Stop loss price: {stop:.3f}")
+
+            if order_id not in order_state:
+                order_state[order_id] = {
+                    "lot": lot,
+                    "take": take,
+                    "stop": stop
+                }
+                print(f"Current order state: {order_state}")
+
+                # Start monitoring in a new thread
+                monitoring_thread = threading.Thread(target=monitor_price, args=(order_id, lot, take, stop))
+                monitoring_thread.daemon = True
+                monitoring_thread.start()
+                print("Monitoring thread started.")
+            else:
+                print(f"Order with ID {order_id} is already in the order state.")
+        else:
+            print("Error: Response not found in order.")
 
 
 def take_profit(lot):
-
     tp = lot * 1.05
 
     order = client.market_order_sell(
