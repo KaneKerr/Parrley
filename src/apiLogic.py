@@ -31,6 +31,24 @@ def calc_trades():
             break
 
 
+# if vol
+def calc_trades_scary():
+    # Get all accounts
+    accounts = client.get_accounts()
+    print("working")
+
+    for account in accounts.accounts:
+        if account["currency"] == "GBP":
+            gbp_balance = account["available_balance"]["value"]
+            print(f"GBP Balance: {gbp_balance}")
+
+            lot = float(gbp_balance) / 150
+            lot = round(lot)
+            lot = str(lot)
+            make_order(lot)
+            break
+
+
 def monitor_price(order_id, lot, take, stop):
     print(f"Current order state: {order_state}")
     print("Monitor thread started.")
@@ -59,7 +77,6 @@ def monitor_price(order_id, lot, take, stop):
 
 
 def make_order(lot):
-
     if len(order_state) >= 5:
         print("Maximum number of orders reached. Exiting.")
         return
