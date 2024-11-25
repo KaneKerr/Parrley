@@ -1,7 +1,6 @@
-
 import requests
 import time
-from apiLogic import calc_trades
+from apiLogic import calc_trades, calc_trades_scary
 
 
 def fetch_candles(start_timestamp, end_timestamp):
@@ -38,8 +37,14 @@ def over_sold():
         print(f"Latest EMA: {latest_ema}")
         print(f"Current price: {current_price}")
 
+        vol = daily_candles()
+
         # Check if the current price is above or below the EMAs
-        if current_price > latest_ema and latest_rsi < 30:
+        if current_price > latest_ema and latest_rsi < 30 and vol:
+            print("Market is bullish and OverSold. The current price is above the EMA and the RSI is below 30 but "
+                  "very volatile.")
+            calc_trades_scary()
+        elif current_price > latest_ema and latest_rsi < 30:
             print("Market is bullish and OverSold. The current price is above the EMA and the RSI is below 30.")
             calc_trades()
         elif current_price < latest_ema and latest_rsi < 30:
@@ -152,3 +157,31 @@ def fetch_and_calculate_ema(period=200):
 
     # Calculate EMA based on the closing prices
     return calculate_ema(prices, period=period)
+
+
+def daily_candles():
+    current_timestamp = int(time.time())
+    start_timestamp = current_timestamp - (24 * 60 * 60)
+
+    url = "https://api.exchange.coinbase.com/products/BTC-GBP/candles"
+
+    params = {
+        "start": time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(start_timestamp)),
+        "end": time.strftime('%Y-%m-%dT%H:%M:%S', time.gmtime(current_timestamp)),
+        "granularity": 86400
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        candles = response.json()
+
+        if candles:
+            highest_price = candles[0][2]
+            lowest_price = candles[0][1]
+        else:
+            return "No Candle Data"
+        return True
+    else:
+        print(f"Error fetching daily candles: {response.status_code} - {response.text}")
+        return None, None
