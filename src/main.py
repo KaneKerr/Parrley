@@ -1,5 +1,6 @@
 from newsFilter import get_news
 import time
+from botLogic import daily_candles
 
 
 def main():
