@@ -44,14 +44,14 @@ def over_sold():
             print("Market is bullish and OverSold. The current price is above the EMA and the RSI is below 30 but "
                   "very volatile.")
             calc_trades_scary()
-        elif current_price > latest_ema and latest_rsi < 30:
+        elif current_price > latest_ema and latest_rsi < 30 and not vol:
             print("Market is bullish and OverSold. The current price is above the EMA and the RSI is below 30.")
             calc_trades()
         elif current_price < latest_ema and latest_rsi < 30:
             print(
                 "Market is bearish. The current price is below the EMA but the market is OverSold. The RSI is below 30.")
         elif latest_rsi > 30 and latest_ema > current_price:
-            print("Market is overbought and EMA is above the current price, the RSI is above 30.")
+            print("Market is over 30 rsi and EMA is above the current price, the RSI is above 30.")
         elif current_price > latest_ema and latest_rsi > 70:
             print("Market is bullish but overbought. The current price is above the EMA and the RSI is above 70.")
         elif current_price < latest_ema and latest_rsi > 70:
@@ -179,9 +179,18 @@ def daily_candles():
         if candles:
             highest_price = candles[0][2]
             lowest_price = candles[0][1]
+
+            diff = highest_price - lowest_price
+            avg = (highest_price + lowest_price) / 2
+            to_decimal = diff / avg
+            change = float(round(to_decimal * 100, 2))
+
+            if change > 5:
+                return True
+            else:
+                return False
         else:
             return "No Candle Data"
-        return True
     else:
         print(f"Error fetching daily candles: {response.status_code} - {response.text}")
         return None, None
