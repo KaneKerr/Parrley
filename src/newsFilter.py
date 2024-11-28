@@ -23,7 +23,7 @@ def get_news():
 
     filtered_data = []
 
-    filters = ["bitcoin", "btc", "coinbase", "fomc", "warren buffett", "crypto", "eth", "ethereum", "ether"]
+    filters = ["bitcoin", "btc", "coinbase", "fomc", "warren buffett", "eth", "ethereum", "ether"]
 
     for article in data:
         try:
@@ -38,4 +38,5 @@ def get_news():
         print("Not enough news running bot")
         over_sold()
     else:
+        print(filtered_data)
         print("Too much news")
