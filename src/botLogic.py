@@ -3,6 +3,7 @@ import time
 from apiLogic import calc_trades, calc_trades_scary
 
 
+
 def fetch_candles(start_timestamp, end_timestamp):
     url = f"https://api.exchange.coinbase.com/products/BTC-GBP/candles?granularity=3600"
     params = {
@@ -104,7 +105,7 @@ def calculate_rsi(prices, period=14):
 
 def fetch_and_calculate_rsi(period=14):
     current_timestamp = int(time.time())
-    start_timestamp = current_timestamp - (10 * 24 * 60 * 60)
+    start_timestamp = current_timestamp - (12 * 24 * 60 * 60) # highest period we can go with coinbase
 
     candles = fetch_candles(
         start_timestamp=start_timestamp,
@@ -184,6 +185,7 @@ def daily_candles():
             avg = (highest_price + lowest_price) / 2
             to_decimal = diff / avg
             change = float(round(to_decimal * 100, 2))
+            print(f"Change: {change}%")
 
             if change > 5:
                 return True
