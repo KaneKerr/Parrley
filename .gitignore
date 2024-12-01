@@ -3,3 +3,25 @@
 
 # Ignore backup files or temporary files
 *.env~
+
+# Ignore node_modules
+node_modules
+
+# Ignore build files
+build
+
+# Ignore dist files
+dist
+
+# Ignore coverage files
+coverage
+
+# Ignore test files
+test
+
+# Ignore config files
+# Ignore config files
+config
+
+# others
+.venv
