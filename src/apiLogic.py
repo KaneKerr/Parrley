@@ -49,7 +49,7 @@ def calc_trades_scary():
             break
 
 
-def monitor_price(order_id, lot, take, stop):
+def monitor_price(order_id, lot, take, stop, btc_gbp_price):
     print(f"Current order state: {order_state}")
     print("Monitor thread started.")
 
@@ -60,6 +60,9 @@ def monitor_price(order_id, lot, take, stop):
 
             print(f"Fetched current price: {current_price}")
 
+            if current_price >= take / 2:
+                print(f"moving stop loss to {current_price:.3f}")
+                stop = btc_gbp_price
             if current_price >= take:
                 print(f"Take profit reached at {current_price:.3f}")
                 take_profit(lot)
@@ -96,8 +99,8 @@ def make_order(lot):
             price_at_buy = client.get_product("BTC-GBP")
             btc_gbp_price = float(price_at_buy["price"])
 
-            take = btc_gbp_price * 1.05
-            stop = btc_gbp_price * 0.95
+            take = btc_gbp_price * 1.10
+            stop = btc_gbp_price * 0.90
             print(f"Take profit price: {take:.3f}")
             print(f"Stop loss price: {stop:.3f}")
 
@@ -110,7 +113,8 @@ def make_order(lot):
                 print(f"Current order state: {order_state}")
 
                 # Start monitoring in a new thread
-                monitoring_thread = threading.Thread(target=monitor_price, args=(order_id, lot, take, stop))
+                monitoring_thread = threading.Thread(target=monitor_price,
+                                                     args=(order_id, lot, take, stop, btc_gbp_price))
                 monitoring_thread.daemon = True
                 monitoring_thread.start()
                 print("Monitoring thread started.")
@@ -121,6 +125,24 @@ def make_order(lot):
 
 
 def take_profit(lot):
+    tp = lot * 1.05
+
+    order = client.market_order_sell(
+        client_order_id="",
+        product_id="BTC-GBP",
+        base_size=tp,
+    )
+
+    if 'success_response' in order:
+        order_id = order['success_response']['order_id']
+        fills = client.get_fills(order_id=order_id)
+        print(dumps(fills, indent=2))
+    elif 'error_response' in order:
+        error_response = order['error_response']
+        print(error_response)
+
+
+def partial_take_profit(lot):
     tp = lot * 1.05
 
     order = client.market_order_sell(
