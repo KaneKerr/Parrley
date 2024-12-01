@@ -77,7 +77,7 @@ def monitor_price(order_id, lot, take, stop, btc_gbp_price):
                     save_order_state()
                 break
 
-            time.sleep(1800)
+            time.sleep(900)
     except Exception as e:
         print(f"Error in monitor_price: {e}")
 
