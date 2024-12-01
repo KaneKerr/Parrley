@@ -10,7 +10,7 @@ load_dotenv()
 api_key = dotenv.get_key("../.env", "api_key")
 api_secret = dotenv.get_key("../.env", "api_secret")
 
-# Initialize Coinbase client
+
 client = RESTClient(api_key=api_key, api_secret=api_secret)
 
 
