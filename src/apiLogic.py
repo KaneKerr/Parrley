@@ -4,8 +4,7 @@ from dotenv import load_dotenv
 from json import dumps
 import time
 import threading
-
-order_state = {}
+from state_manager import order_state, save_order_state, order_state_lock
 
 load_dotenv()
 api_key = dotenv.get_key("../.env", "api_key")
@@ -58,20 +57,24 @@ def monitor_price(order_id, lot, take, stop, btc_gbp_price):
             get_price = client.get_product("BTC-GBP")
             current_price = float(get_price["price"])
 
-            print(f"Fetched current price: {current_price}")
-
             if current_price >= take / 2:
-                print(f"moving stop loss to {current_price:.3f}")
+                print(f"Moving stop loss to break-even: {btc_gbp_price:.3f}")
                 stop = btc_gbp_price
+
             if current_price >= take:
                 print(f"Take profit reached at {current_price:.3f}")
                 take_profit(lot)
-                order_state.pop(order_id)
+                with order_state_lock:
+                    order_state.pop(order_id, None)
+                    save_order_state()
                 break
+
             elif current_price <= stop:
                 print(f"Stop loss reached at {current_price:.3f}")
-                stop_loss(f"trade lost {current_price}", lot)
-                order_state.pop(order_id)
+                stop_loss(lot)
+                with order_state_lock:
+                    order_state.pop(order_id, None)
+                    save_order_state()
                 break
 
             time.sleep(1800)
@@ -90,38 +93,32 @@ def make_order(lot):
             quote_size=lot,
         )
 
-        print(f"Order response: {order}")
-
         if hasattr(order, 'success') and order.success:
             order_id = order.response['order_id']
-            print(f"Order placed successfully! Order ID: {order_id}")
-
             price_at_buy = client.get_product("BTC-GBP")
             btc_gbp_price = float(price_at_buy["price"])
 
             take = btc_gbp_price * 1.10
             stop = btc_gbp_price * 0.90
-            print(f"Take profit price: {take:.3f}")
-            print(f"Stop loss price: {stop:.3f}")
 
-            if order_id not in order_state:
-                order_state[order_id] = {
-                    "lot": lot,
-                    "take": take,
-                    "stop": stop
-                }
-                print(f"Current order state: {order_state}")
+            with order_state_lock:
+                if order_id not in order_state:
+                    order_state[order_id] = {
+                        "lot": lot,
+                        "take": take,
+                        "stop": stop
+                    }
+                    save_order_state()
 
-                # Start monitoring in a new thread
-                monitoring_thread = threading.Thread(target=monitor_price,
-                                                     args=(order_id, lot, take, stop, btc_gbp_price))
-                monitoring_thread.daemon = True
-                monitoring_thread.start()
-                print("Monitoring thread started.")
-            else:
-                print(f"Order with ID {order_id} is already in the order state.")
-        else:
-            print("Error: Response not found in order.")
+                    # Start monitoring in a thread
+                    monitoring_thread = threading.Thread(
+                        target=monitor_price,
+                        args=(order_id, lot, take, stop, btc_gbp_price)
+                    )
+                    monitoring_thread.daemon = True
+                    monitoring_thread.start()
+                else:
+                    print(f"Order with ID {order_id} already exists.")
 
 
 def take_profit(lot):
@@ -160,10 +157,7 @@ def partial_take_profit(lot):
         print(error_response)
 
 
-def stop_loss(current_price, lot):
-    stop_loss_price = current_price * 0.95
-    print(f"Stop loss price: {stop_loss_price}")
-
+def stop_loss(lot):
     sl = lot * 0.95
 
     order = client.market_order_sell(
